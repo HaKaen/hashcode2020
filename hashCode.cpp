@@ -30,6 +30,8 @@ public:
 	vector<Book*> vBooksInLibrary_m;
 	vector<Book*> vBooksReadHere_m;
 	bool isSignedUp_m;
+	double score;
+	double score2;
 };
 
 Book::Book(int index_p, int score_p):
@@ -46,7 +48,9 @@ nbDaysToFinish_m(nbDaysToFinish_p),
 nbBooksShippedByDay_m(nbBooksShippedByDay_p),
 vBooksInLibrary_m(),
 vBooksReadHere_m(),
-isSignedUp_m(signedUp_m)
+isSignedUp_m(signedUp_m),
+score(0.0),
+score2(0.0)
 {
 }
 
@@ -105,7 +109,9 @@ istream& operator>>(istream& is_p, BookProblem& bookProblem_p){
 		int nbBooksShippedByDay_l;
 		is_p >> nbBooksInLibrary_l >> nbDaysToFinish_l >> nbBooksShippedByDay_l;
 		Library* pNewLibrary_l = new Library(i,nbBooksInLibrary_l,nbDaysToFinish_l,nbBooksShippedByDay_l,false);
-
+		//calcul du score de la lib
+		pNewLibrary_l->score = nbBooksShippedByDay_l * nbBooksInLibrary_l;
+		pNewLibrary_l->score2 = (bookProblem_p.nbDays_m - nbDaysToFinish_l) * nbBooksShippedByDay_l;
 		for (int j = 0; j < nbBooksInLibrary_l; j++){
 			int bookIndex_l;
 			is_p >> bookIndex_l;
@@ -141,7 +147,9 @@ ostream& operator<<(ostream& os_p, const BookProblem& bookProblem_p){
  ************************************************************************************************************************************/
 	int nbLib = 0;
 	for (Library* l : bookProblem_p.vLibraries_m){
-		nbLib++;
+		if(l->isSignedUp_m){
+			nbLib++;
+		}
 	}
 	os_p << nbLib << endl;
 	for (int i = 0; i < bookProblem_p.nbLibraries_m; i++){
@@ -175,17 +183,28 @@ void opt(BookProblem pb_p, int index_p, int max_p){
 void BookProblem::optimize(){
 	//code
 	vector<Book*> books_in_lib;
-//	sort(vLibraries_m.begin(), vLibraries_m.end(),
-//		[](const Lib & a, const Lib & b) -> bool
-//	{
-//		return a.score > b.score;
-//	});
+	sort(vLibraries_m.begin(), vLibraries_m.end(),
+		[](Library* & a, Library* & b) -> bool
+	{
+		return a->score > b->score;
+	});
+
+//	sort (vLibraries_m.begin(),vLibraries_m.end(),[this](Library* lib1_p, Library* lib2_p){
+//		return (nbDays_m - lib1_p->nbDaysToFinish_m)*lib1_p->nbBooksShippedByDay_m
+//				< (nbDays_m - lib2_p->nbDaysToFinish_m)*lib2_p->nbBooksShippedByDay_m
+//				;});
+
+	for (Library *lib_l : vLibraries_m) {
+		sort (lib_l->vBooksInLibrary_m.begin(),lib_l->vBooksInLibrary_m.end(),[](Book* b1_p, Book* b2_p){
+				return b1_p->score_m > b2_p->score_m ;});
+	}
+
 	int d = nbDays_m;
 	for (Library* l : vLibraries_m){
 		cerr << "Days remaining : " << d << endl;
 		books_in_lib.clear();
 		if (d-l->nbDaysToFinish_m>0){
-			cerr << " Lib : " << l->index_m << endl;
+//			cerr << " Lib : " << l->index_m << endl;
 			l->isSignedUp_m = true;
  			d -= l->nbDaysToFinish_m;
 			for (Book* b : l->vBooksInLibrary_m){
