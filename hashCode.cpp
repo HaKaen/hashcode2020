@@ -22,13 +22,14 @@ public:
 
 class Library{
 public:
-	Library(int,int,int,int);
+	Library(int,int,int,int,bool);
 	int index_m;
 	int nbBooks_m;
 	int nbDaysToFinish_m;
 	int nbBooksShippedByDay_m;
 	vector<Book*> vBooksInLibrary_m;
 	vector<Book*> vBooksReadHere_m;
+	bool isSignedUp_m;
 };
 
 Book::Book(int index_p, int score_p):
@@ -38,13 +39,14 @@ isAssigned_m(false)
 {
 }
 
-Library::Library(int index_p, int nbBooks_p, int nbDaysToFinish_p, int nbBooksShippedByDay_p):
+Library::Library(int index_p, int nbBooks_p, int nbDaysToFinish_p, int nbBooksShippedByDay_p, bool signedUp_m):
 index_m(index_p),
 nbBooks_m(nbBooks_p),
 nbDaysToFinish_m(nbDaysToFinish_p),
 nbBooksShippedByDay_m(nbBooksShippedByDay_p),
 vBooksInLibrary_m(),
-vBooksReadHere_m()
+vBooksReadHere_m(),
+isSignedUp_m(signedUp_m)
 {
 }
 
@@ -102,7 +104,7 @@ istream& operator>>(istream& is_p, BookProblem& bookProblem_p){
 		int nbDaysToFinish_l;
 		int nbBooksShippedByDay_l;
 		is_p >> nbBooksInLibrary_l >> nbDaysToFinish_l >> nbBooksShippedByDay_l;
-		Library* pNewLibrary_l = new Library(i,nbBooksInLibrary_l,nbDaysToFinish_l,nbBooksShippedByDay_l);
+		Library* pNewLibrary_l = new Library(i,nbBooksInLibrary_l,nbDaysToFinish_l,nbBooksShippedByDay_l,false);
 
 		for (int j = 0; j < nbBooksInLibrary_l; j++){
 			int bookIndex_l;
@@ -137,9 +139,13 @@ ostream& operator<<(ostream& os_p, const BookProblem& bookProblem_p){
 		os_p << endl;
 	}
  ************************************************************************************************************************************/
-
+	int nbLib = 0;
+	for (Library* l : bookProblem_p.vLibraries_m){
+		nbLib++;
+	}
+	os_p << nbLib << endl;
 	for (int i = 0; i < bookProblem_p.nbLibraries_m; i++){
-		os_p << i << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size() << endl;
+		os_p << i << " " << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size() << endl;
 
 		for (unsigned int j = 0; j < bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size(); j++){
 			os_p << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m[j]->index_m << " ";
@@ -176,8 +182,11 @@ void BookProblem::optimize(){
 //	});
 	int d = nbDays_m;
 	for (Library* l : vLibraries_m){
+		cerr << "Days remaining : " << d << endl;
+		books_in_lib.clear();
 		if (d-l->nbDaysToFinish_m>0){
 			cerr << " Lib : " << l->index_m << endl;
+			l->isSignedUp_m = true;
  			d -= l->nbDaysToFinish_m;
 			for (Book* b : l->vBooksInLibrary_m){
 				if(!b->isAssigned_m){
@@ -196,22 +205,6 @@ void BookProblem::optimize(){
 			break;
 		}
 	}
-//	int sum_l = 0;
-//	bool continue_l = true;
-//	//Sort using a lambda
-//	sort(Books_m.begin(),Books_m.end(),[](Book* p1_p, Book* p2_p){return p1_p->nbSlices_m > p2_p->nbSlices_m;});
-//	//While loop
-//	while(continue_l){
-//		continue_l = false;
-//		for (Book* pBook_l : Books_m){
-//			if (!pBook_l->isAssigned_m && sum_l + pBook_l->nbSlices_m < maxSlices_m){
-//				pBook_l->isAssigned_m = true;
-//				BooksToOrder_m.push_back(pBook_l);
-//				sum_l += pBook_l->nbSlices_m;
-//				continue_l = true;
-//			}
-//		}
-//	}
 }
 
 void readInput(const string& fileName_p,BookProblem& pb_p){
