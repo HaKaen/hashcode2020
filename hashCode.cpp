@@ -146,19 +146,23 @@ ostream& operator<<(ostream& os_p, const BookProblem& bookProblem_p){
 	}
  ************************************************************************************************************************************/
 	int nbLib = 0;
-	for (Library* l : bookProblem_p.vLibraries_m){
-		if(l->isSignedUp_m){
+	for (Library* pLibrary_l : bookProblem_p.vLibraries_m){
+		if (pLibrary_l->isSignedUp_m && pLibrary_l->vBooksReadHere_m.size() > 0){
 			nbLib++;
 		}
 	}
 	os_p << nbLib << endl;
 	for (int i = 0; i < bookProblem_p.nbLibraries_m; i++){
-		os_p << i << " " << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size() << endl;
+		if (bookProblem_p.vLibraries_m[i]->isSignedUp_m){
+			if (bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size()){
+				os_p << bookProblem_p.vLibraries_m[i]->index_m << " " << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size() << endl;
 
-		for (unsigned int j = 0; j < bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size(); j++){
-			os_p << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m[j]->index_m << " ";
+				for (unsigned int j = 0; j < bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size(); j++){
+					os_p << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m[j]->index_m << " ";
+				}
+				os_p << endl;
+			}
 		}
-		os_p << endl;
 	}
 
 	return os_p;
@@ -182,11 +186,10 @@ void opt(BookProblem pb_p, int index_p, int max_p){
 
 void BookProblem::optimize(){
 	//code
-	vector<Book*> books_in_lib;
 	sort(vLibraries_m.begin(), vLibraries_m.end(),
 		[](Library* & a, Library* & b) -> bool
 	{
-		return a->score > b->score;
+		return a->nbDaysToFinish_m < b->nbDaysToFinish_m;
 	});
 
 //	sort (vLibraries_m.begin(),vLibraries_m.end(),[this](Library* lib1_p, Library* lib2_p){
@@ -195,28 +198,31 @@ void BookProblem::optimize(){
 //				;});
 
 	for (Library *lib_l : vLibraries_m) {
-		sort (lib_l->vBooksInLibrary_m.begin(),lib_l->vBooksInLibrary_m.end(),[](Book* b1_p, Book* b2_p){
-				return b1_p->score_m > b2_p->score_m ;});
+		sort (lib_l->vBooksInLibrary_m.begin(),lib_l->vBooksInLibrary_m.end(),[](Book* b1_p, Book* b2_p){return b1_p->score_m > b2_p->score_m ;});
 	}
 
 	int d = nbDays_m;
 	for (Library* l : vLibraries_m){
-		cerr << "Days remaining : " << d << endl;
-		books_in_lib.clear();
-		if (d-l->nbDaysToFinish_m>0){
+//		cerr << "Days remaining : " << d << endl;
+		vector<Book*> books_in_lib;
+		if (d-l->nbDaysToFinish_m >= 0){
 //			cerr << " Lib : " << l->index_m << endl;
 			l->isSignedUp_m = true;
  			d -= l->nbDaysToFinish_m;
 			for (Book* b : l->vBooksInLibrary_m){
 				if(!b->isAssigned_m){
 					books_in_lib.push_back(b);
-					b->isAssigned_m=true;
 				}
 			}
 			auto end = books_in_lib.end();
 			int day_to_read = std::ceil((int)books_in_lib.size()/l->nbBooksShippedByDay_m);
-			if (d-day_to_read<0){
+			if (d < day_to_read){
 				end = books_in_lib.begin()+l->nbBooksShippedByDay_m*d;
+			}
+			for (auto it_l = books_in_lib.begin(); it_l != end; ++it_l){
+				Book* pBook_l = *it_l;
+				pBook_l->isAssigned_m = true;
+//				cout << "assign book " << pBook_l->index_m << " to library " << l->index_m << endl;
 			}
 			l->vBooksReadHere_m = vector<Book*>(books_in_lib.begin(),books_in_lib.end());
 		}
