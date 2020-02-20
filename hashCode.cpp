@@ -6,6 +6,7 @@
 #include<map>
 #include<set>
 #include<string>
+#include <cmath>
 
 using namespace std;
 hash<string> hash_fn;
@@ -166,6 +167,35 @@ void opt(BookProblem pb_p, int index_p, int max_p){
 }
 
 void BookProblem::optimize(){
+	//code
+	vector<Book*> books_in_lib;
+//	sort(vLibraries_m.begin(), vLibraries_m.end(),
+//		[](const Lib & a, const Lib & b) -> bool
+//	{
+//		return a.score > b.score;
+//	});
+	int d = nbDays_m;
+	for (Library* l : vLibraries_m){
+		if (d-l->nbDaysToFinish_m>0){
+			cerr << " Lib : " << l->index_m << endl;
+ 			d -= l->nbDaysToFinish_m;
+			for (Book* b : l->vBooksInLibrary_m){
+				if(!b->isAssigned_m){
+					books_in_lib.push_back(b);
+					b->isAssigned_m=true;
+				}
+			}
+			auto end = books_in_lib.end();
+			int day_to_read = std::ceil((int)books_in_lib.size()/l->nbBooksShippedByDay_m);
+			if (d-day_to_read<0){
+				end = books_in_lib.begin()+l->nbBooksShippedByDay_m*d;
+			}
+			l->vBooksReadHere_m = vector<Book*>(books_in_lib.begin(),books_in_lib.end());
+		}
+		else {
+			break;
+		}
+	}
 //	int sum_l = 0;
 //	bool continue_l = true;
 //	//Sort using a lambda
@@ -215,7 +245,7 @@ int main(int argc, char** argv){
 		//Read file
 		readInput(string(argv[i]),pb_l);
 		//Optimize
-//		pb_l.optimize();
+		pb_l.optimize();
 //		//Eval
 		int eval_l = pb_l.eval();
 		total_l += eval_l;
