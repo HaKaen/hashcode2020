@@ -72,6 +72,8 @@ public:
 	void optimize();
 	//Eval
 	int eval();
+	//Max
+	int max();
 	//Lecture d'un objet
 	friend istream& operator>> (istream&,BookProblem&);
 	//Ecriture d'un objet
@@ -177,7 +179,16 @@ int BookProblem::eval(){
 		}
 	}
 
-	cout << "eval = " << value_l << "\n";
+	return value_l;
+}
+
+int BookProblem::max(){
+	int value_l = 0;
+
+	for (Book* pBook_l : vBooks_m){
+		value_l += pBook_l->score_m;
+	}
+
 	return value_l;
 }
 
@@ -266,6 +277,8 @@ int main(int argc, char** argv){
 		pb_l.optimize();
 //		//Eval
 		int eval_l = pb_l.eval();
+		int max_l = pb_l.max();
+		cerr << "(" << eval_l << " / " << max_l << ")" << endl;
 		total_l += eval_l;
 //		//Write
 		writeOutput(string(argv[i]),pb_l,eval_l);
