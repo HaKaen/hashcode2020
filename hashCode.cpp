@@ -72,6 +72,8 @@ public:
 	void optimize();
 	//Eval
 	int eval();
+	//Max
+	int max();
 	//Lecture d'un objet
 	friend istream& operator>> (istream&,BookProblem&);
 	//Ecriture d'un objet
@@ -173,7 +175,16 @@ int BookProblem::eval(){
 		}
 	}
 
-	cout << "eval = " << value_l << "\n";
+	return value_l;
+}
+
+int BookProblem::max(){
+	int value_l = 0;
+
+	for (Book* pBook_l : vBooks_m){
+		value_l += pBook_l->score_m;
+	}
+
 	return value_l;
 }
 
@@ -201,7 +212,7 @@ void BookProblem::optimize(){
 
 	int d = nbDays_m;
 	for (Library* l : vLibraries_m){
-		cerr << "Days remaining : " << d << endl;
+//		cerr << "Days remaining : " << d << endl;
 		books_in_lib.clear();
 		if (d-l->nbDaysToFinish_m>0){
 //			cerr << " Lib : " << l->index_m << endl;
@@ -210,7 +221,6 @@ void BookProblem::optimize(){
 			for (Book* b : l->vBooksInLibrary_m){
 				if(!b->isAssigned_m){
 					books_in_lib.push_back(b);
-					b->isAssigned_m=true;
 				}
 			}
 			auto end = books_in_lib.end();
@@ -218,7 +228,10 @@ void BookProblem::optimize(){
 			if (d-day_to_read<0){
 				end = books_in_lib.begin()+l->nbBooksShippedByDay_m*d;
 			}
-			l->vBooksReadHere_m = vector<Book*>(books_in_lib.begin(),books_in_lib.end());
+			for (auto it = books_in_lib.begin(); it!=books_in_lib.end(); it++){
+				l->vBooksReadHere_m.push_back(*it);
+				(*it)->isAssigned_m = true;
+			}
 		}
 		else {
 			break;
@@ -260,6 +273,8 @@ int main(int argc, char** argv){
 		pb_l.optimize();
 //		//Eval
 		int eval_l = pb_l.eval();
+		int max_l = pb_l.max();
+		cerr << "(" << eval_l << " / " << max_l << ")" << endl;
 		total_l += eval_l;
 //		//Write
 		writeOutput(string(argv[i]),pb_l,eval_l);
