@@ -27,6 +27,7 @@ public:
 	int nbDaysToFinish_m;
 	int nbBooksShippedByDay_m;
 	vector<Book*> vBooksInLibrary_m;
+	vector<Book*> vBooksReadHere_m;
 };
 
 Book::Book(int index_p, int score_p):
@@ -41,7 +42,8 @@ index_m(index_p),
 nbBooks_m(nbBooks_p),
 nbDaysToFinish_m(nbDaysToFinish_p),
 nbBooksShippedByDay_m(nbBooksShippedByDay_p),
-vBooksInLibrary_m()
+vBooksInLibrary_m(),
+vBooksReadHere_m()
 {
 }
 
@@ -116,7 +118,7 @@ istream& operator>>(istream& is_p, BookProblem& bookProblem_p){
 //Writer in output file
 ostream& operator<<(ostream& os_p, const BookProblem& bookProblem_p){
 
-
+/*************************************************** JUST TO CHECK READING ********************************************************
 	os_p << bookProblem_p.nbBooks_m << " " << bookProblem_p.nbLibraries_m << " " << bookProblem_p.nbDays_m << endl;
 
 	for (int i = 0; i < bookProblem_p.nbBooks_m; i++){
@@ -133,14 +135,16 @@ ostream& operator<<(ostream& os_p, const BookProblem& bookProblem_p){
 		}
 		os_p << endl;
 	}
+ ************************************************************************************************************************************/
 
-//	os_p << bookProblem_p.BooksToOrder_m.size() << endl;
-//
-//	os_p << bookProblem_p.BooksToOrder_m[0]->index_m;
-//
-//	for (unsigned int i = 1; i < bookProblem_p.BooksToOrder_m.size(); i++){
-//		os_p << " " << bookProblem_p.BooksToOrder_m[i]->index_m;
-//	}
+	for (int i = 0; i < bookProblem_p.nbLibraries_m; i++){
+		os_p << i << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size() << endl;
+
+		for (unsigned int j = 0; j < bookProblem_p.vLibraries_m[i]->vBooksReadHere_m.size(); j++){
+			os_p << bookProblem_p.vLibraries_m[i]->vBooksReadHere_m[j]->index_m << " ";
+		}
+		os_p << endl;
+	}
 
 	return os_p;
 }
