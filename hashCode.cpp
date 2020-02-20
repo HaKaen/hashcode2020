@@ -31,7 +31,6 @@ public:
 	vector<Book*> vBooksReadHere_m;
 	bool isSignedUp_m;
 	double score;
-	double score2;
 };
 
 Book::Book(int index_p, int score_p):
@@ -49,8 +48,7 @@ nbBooksShippedByDay_m(nbBooksShippedByDay_p),
 vBooksInLibrary_m(),
 vBooksReadHere_m(),
 isSignedUp_m(signedUp_m),
-score(0.0),
-score2(0.0)
+score(0.0)
 {
 }
 
@@ -66,6 +64,7 @@ public:
 	int nbDays_m;
 	//Books in the problem
 	vector<Book*> vBooks_m;
+	map <int, int> mBookFreq_m;
 	//Solution
 	vector<Library*> vLibraries_m;
 	//Optimize
@@ -85,6 +84,7 @@ nbBooks_m(),
 nbLibraries_m(),
 nbDays_m(),
 vBooks_m(),
+mBookFreq_m(),
 vLibraries_m()
 {
 }
@@ -98,11 +98,15 @@ BookProblem::~BookProblem(){
 //Reader from input file
 istream& operator>>(istream& is_p, BookProblem& bookProblem_p){
 	is_p >> bookProblem_p.nbBooks_m >> bookProblem_p.nbLibraries_m >> bookProblem_p.nbDays_m;
+	for (int i = 0; i < bookProblem_p.nbBooks_m; i++){
+		bookProblem_p.mBookFreq_m[i] = 0;
+	}
 
 	for (int i = 0; i < bookProblem_p.nbBooks_m; i++){
 		int score_l;
 		is_p >> score_l;
 		bookProblem_p.vBooks_m.push_back(new Book(i,score_l));
+		bookProblem_p.mBookFreq_m[bookProblem_p.vBooks_m[i]->index_m]++;
 	}
 
 	for (int i = 0; i < bookProblem_p.nbLibraries_m; i++){
@@ -112,8 +116,7 @@ istream& operator>>(istream& is_p, BookProblem& bookProblem_p){
 		is_p >> nbBooksInLibrary_l >> nbDaysToFinish_l >> nbBooksShippedByDay_l;
 		Library* pNewLibrary_l = new Library(i,nbBooksInLibrary_l,nbDaysToFinish_l,nbBooksShippedByDay_l,false);
 		//calcul du score de la lib
-		pNewLibrary_l->score = nbBooksShippedByDay_l * nbBooksInLibrary_l;
-		pNewLibrary_l->score2 = (bookProblem_p.nbDays_m - nbDaysToFinish_l) * nbBooksShippedByDay_l;
+		pNewLibrary_l->score = (bookProblem_p.nbDays_m - nbDaysToFinish_l) * nbBooksShippedByDay_l * nbBooksInLibrary_l;
 		for (int j = 0; j < nbBooksInLibrary_l; j++){
 			int bookIndex_l;
 			is_p >> bookIndex_l;
@@ -203,13 +206,11 @@ void BookProblem::optimize(){
 		return a->nbDaysToFinish_m < b->nbDaysToFinish_m;
 	});
 
-//	sort (vLibraries_m.begin(),vLibraries_m.end(),[this](Library* lib1_p, Library* lib2_p){
-//		return (nbDays_m - lib1_p->nbDaysToFinish_m)*lib1_p->nbBooksShippedByDay_m
-//				< (nbDays_m - lib2_p->nbDaysToFinish_m)*lib2_p->nbBooksShippedByDay_m
-//				;});
-
 	for (Library *lib_l : vLibraries_m) {
-		sort (lib_l->vBooksInLibrary_m.begin(),lib_l->vBooksInLibrary_m.end(),[](Book* b1_p, Book* b2_p){return b1_p->score_m > b2_p->score_m ;});
+//		sort (lib_l->vBooksInLibrary_m.begin(),lib_l->vBooksInLibrary_m.end(),[](Book* b1_p, Book* b2_p){return b1_p->score_m > b2_p->score_m ;});
+		sort (lib_l->vBooksInLibrary_m.begin(),lib_l->vBooksInLibrary_m.end(),[this](Book* b1_p, Book* b2_p){
+				return b1_p->score_m * (nbBooks_m - mBookFreq_m[b1_p->index_m])*(nbBooks_m - mBookFreq_m[b1_p->index_m]) >
+				b2_p->score_m * (nbBooks_m - mBookFreq_m[b2_p->index_m]) * (nbBooks_m - mBookFreq_m[b2_p->index_m]);});
 	}
 
 	int d = nbDays_m;
