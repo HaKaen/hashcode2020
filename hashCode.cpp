@@ -150,13 +150,16 @@ ostream& operator<<(ostream& os_p, const BookProblem& bookProblem_p){
 }
 
 int BookProblem::eval(){
-//	int value_l = 0;
-//	for (Book* pBook_l : BooksToOrder_m){
-//		value_l+= pBook_l->nbSlices_m;
-//	}
-//	cout << "eval = " << value_l << "\n";
-//	return value_l;
-	return 0;
+	int value_l = 0;
+
+	for (Book* pBook_l : vBooks_m){
+		if (pBook_l->isAssigned_m){
+			value_l += pBook_l->score_m;
+		}
+	}
+
+	cout << "eval = " << value_l << "\n";
+	return value_l;
 }
 
 void opt(BookProblem pb_p, int index_p, int max_p){
@@ -214,10 +217,9 @@ int main(int argc, char** argv){
 		//Optimize
 //		pb_l.optimize();
 //		//Eval
-//		int eval_l = pb_l.eval();
-//		total_l += eval_l;
+		int eval_l = pb_l.eval();
+		total_l += eval_l;
 //		//Write
-		int eval_l = 0;
 		writeOutput(string(argv[i]),pb_l,eval_l);
 	}
 
