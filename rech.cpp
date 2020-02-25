@@ -30,6 +30,41 @@ struct Lib {
 	}
 };
 
+struct Schedule {
+	vector< pair< int, vector<int>> > sol;
+	int score;
+	void read(const int D, const vector<Lib> libs, const vector<int>& book_scores){
+		vector<bool> is_scanned(book_scores.size());
+		int days_left = D;
+		sol.clear();
+		score = 0;
+		int n = 0;
+		scanf("%d", &n);
+		sol.resize(n);
+		for (int i = 0; i < n; ++i){
+			int id = 0;
+			int b = 0;
+			scanf("%d%d", &id, &b);
+			days_left -= libs[id].signup;
+			vector<int> books(b);
+			int last_book = 0;
+			for (int j = 0; j < b; ++j){
+				int book_id = 0;
+				scanf("%d", &book_id);
+				if(j >= days_left*libs[id].perday) continue;
+				if (!is_scanned[book_id]){
+					books[last_book] = book_id;
+					last_book++;
+					score += book_scores[book_id];
+					is_scanned[book_id] = true;
+				}
+			}
+			books.resize(last_book);
+			sol.emplace_back(id, books);
+		}
+	}
+};
+
 /*
 B : lib->score = 2 * lib->score - mean * ((long double)D - lib->signup - mean_signup);			5 822 900
 C :
@@ -77,136 +112,89 @@ int main() {
 		return score;
 	};
 
-	vector< pair< int, vector<int>> > R; // best schedule
-	vector<bool> is_scanned(B), in_standby(L); // status on books scanned and library going into signup
-	vector<int> order;
-	long long current_score = 0;
-	for (int rep = 0; rep < 800000; ++rep) {
-		vector<int> new_order = order;
-		int type = rand() % 4;
-		if (type == 0) {
-			// insert
-			int i = rand() % L;
-			if (in_standby[i]) {
-				continue;
-			}
-			new_order.insert(new_order.begin() + rand() % (1 + new_order.size()), i);
-		}
-		else if (type == 1) {
-			// replace
-			int i = rand() % L;
-			if (in_standby[i] || order.empty()) {
-				continue;
-			}
-			new_order[rand() % order.size()] = i;
-		}
-		else if (type == 2) {
-			if (order.empty()) {
-				continue;
-			}
-			int i = rand() % order.size();
-			int j = rand() % order.size();
-			pair<int, pair<int, int>> best;
-			best = make_pair(INT_MAX, make_pair(0, 0));
-			for (int rep = 0; rep < 3; ++rep) {
-				i = rand() % order.size();
-				j = rand() % order.size();
-				if (i == j) {
-					continue;
-				}
-				best = min(best, { abs(i - j), {i, j} });
-			}
-			if (best.first == INT_MAX) {
-				continue;
-			}
-			swap(new_order[i], new_order[j]);
-		}
-		else if (type == 3) {
-			if (order.empty()) {
-				continue;
-			}
-			new_order.erase(new_order.begin() + rand() % new_order.size());
-		}
-		else {
-			assert(false);
-		}
 
-		long long new_score = estimate(new_order);
-		if (new_score > current_score) {
-			current_score = new_score;
-			order = new_order;
-			in_standby = vector<bool>(L, false);
-			for (int il : new_order) {
-				in_standby[il] = true;
-			}
-		}
-	}
-	cerr << estimate(order) << endl;
-	int days_left = 0;
-	long long total_score = 0;
-	while (true) {
-		pair<long long, pair<int, vector<int>>> best;
-		best.first = 0;
-		for (int il : order) {
-			if (!in_standby[il]) {
-				vector<int> remaining;
-				for (int b : libs[il].books) {
-					if (!is_scanned[b]) {
-						remaining.push_back(b);
-					}
-				}
-				sort(remaining.begin(), remaining.end(), [&](int a, int b) {
-					return book_scores[a] > book_scores[b];
-					});
-				long long reading = max(0, D - days_left - libs[il].signup) * (long long)libs[il].perday;
-				if (reading < (long long)remaining.size()) {
-					remaining.resize(reading);
-				}
-				long long gain = 0;
-				for (int b : remaining) {
-					gain += book_scores[b];
-				}
-				gain = gain * 1000 * 1000 / pow(libs[il].signup, 1.5);
-				if (gain > best.first) {
-					best = { (int)gain, {il, remaining} };
-				}
-				break;
-			}
-		}
-		if (best.first == 0) {
-			break;
-		}
-		int il = best.second.first;
-		in_standby[il] = true;
-		R.emplace_back(il, best.second.second);
-		for (int b : best.second.second) {
-			assert(!is_scanned[b]);
-			is_scanned[b] = true;
-			total_score += book_scores[b];
-		}
-		days_left += libs[il].signup;
-	}
+
+
+	Schedule R; // best schedule
+	R.read(D, libs, book_scores); // init from output file
+	cerr << "Input file score : " << R.score << endl;
+
+//	vector<bool> is_scanned(B), in_standby(L); // status on books scanned and library going into signup
+//	vector<int> order;
+//	long long current_score = 0;
+//	for (int rep = 0; rep < 800000; ++rep) {
+//		vector<int> new_order = order;
+//		int type = rand() % 4;
+//		if (type == 0) {
+//			// insert
+//			int i = rand() % L;
+//			if (in_standby[i]) {
+//				continue;
+//			}
+//			new_order.insert(new_order.begin() + rand() % (1 + new_order.size()), i);
+//		}
+//		else if (type == 1) {
+//			// replace
+//			int i = rand() % L;
+//			if (in_standby[i] || order.empty()) {
+//				continue;
+//			}
+//			new_order[rand() % order.size()] = i;
+//		}
+//		else if (type == 2) {
+//			if (order.empty()) {
+//				continue;
+//			}
+//			int i = rand() % order.size();
+//			int j = rand() % order.size();
+//			pair<int, pair<int, int>> best;
+//			best = make_pair(INT_MAX, make_pair(0, 0));
+//			for (int rep = 0; rep < 3; ++rep) {
+//				i = rand() % order.size();
+//				j = rand() % order.size();
+//				if (i == j) {
+//					continue;
+//				}
+//				best = min(best, { abs(i - j), {i, j} });
+//			}
+//			if (best.first == INT_MAX) {
+//				continue;
+//			}
+//			swap(new_order[i], new_order[j]);
+//		}
+//		else if (type == 3) {
+//			if (order.empty()) {
+//				continue;
+//			}
+//			new_order.erase(new_order.begin() + rand() % new_order.size());
+//		}
+//		else {
+//			assert(false);
+//		}
+//
+//		long long new_score = estimate(new_order);
+//		if (new_score > current_score) {
+//			current_score = new_score;
+//			order = new_order;
+//			in_standby = vector<bool>(L, false);
+//			for (int il : new_order) {
+//				in_standby[il] = true;
+//			}
+//		}
+//	}
+//	cerr << estimate(order) << endl;
+
 
 	/*OUTPUT*/
-	printf("%d\n", (int)R.size());
-	for (pair<int, vector<int>> pp : R) {
-		printf("%d %d\n", pp.first, (int)pp.second.size());
-		for (int x : pp.second) {
-			printf("%d ", x);
-		}
-		puts("");
-	}
-
-	/*OUTPUT*/
-	/*int total_score = 0;
-	printf("%d\n", (int)R.size());
-	for (auto res : R) {
+	int total_score = 0;
+	printf("%d\n", (int)R.sol.size());
+	for (auto res : R.sol) {
 		printf("%d %d\n", res.first, (int)res.second.size());
 		for (int b : res.second) {
 			printf("%d ", b);
-			total_score += B[b]->score;
+			total_score += book_scores[b];
 		}
 		printf("\n");
-	}*/
+	}
 	cerr << "score = " << total_score / 1000. / 1000. << endl;
 }
